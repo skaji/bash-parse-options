@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -54,11 +55,12 @@ func (l *Lines) AppendLines(r *Lines) *Lines {
 }
 
 type Spec struct {
-	Global bool
-	Name   string
-	Alias  []string
-	Kind   string
-	Array  bool
+	Global  bool
+	Name    string
+	Alias   []string
+	Kind    string
+	Default string
+	Array   bool
 }
 
 func toOption(str string) string {
@@ -148,21 +150,27 @@ func Header(c *Config, ss []*Spec) *Lines {
 	l := NewLines()
 	if c.Global {
 		for _, s := range ss {
-			def := "="
-			if s.Array {
-				def = "=()"
+			def := s.Default
+			if s.Kind == "string" && def != "" {
+				def = fmt.Sprintf(`"%s"`, def)
 			}
-			l.Pushf(0, `%s%s`, s.OptionVariable(), def)
+			if s.Array {
+				def = "(" + def + ")"
+			}
+			l.Pushf(0, `%s=%s`, s.OptionVariable(), def)
 		}
 		l.Pushf(0, `parse_options() {`)
 	} else {
 		l.Pushf(0, `main() {`)
 		for _, s := range ss {
-			def := ""
-			if s.Array {
-				def = "=()"
+			def := s.Default
+			if s.Kind == "string" && def != "" {
+				def = fmt.Sprintf(`"%s"`, def)
 			}
-			l.Pushf(1, `local %s%s`, s.OptionVariable(), def)
+			if s.Array {
+				def = "(" + def + ")"
+			}
+			l.Pushf(1, `local %s=%s`, s.OptionVariable(), def)
 		}
 		l.Pushf(1, `local argv=()`)
 	}
@@ -219,7 +227,13 @@ func run(c *Config, specs []*Spec) {
 
 func parseArgs(c *Config, args []string) ([]*Spec, error) {
 	specs := []*Spec{}
-	for _, arg := range args {
+	for _, originalArg := range args {
+		arg := originalArg
+		def := ""
+		if defs := strings.Split(arg, ";"); len(defs) > 1 {
+			arg = defs[0]
+			def = defs[1]
+		}
 		kv := strings.Split(arg, "=")
 		names := strings.Split(kv[0], "|")
 		name := names[0]
@@ -241,15 +255,34 @@ func parseArgs(c *Config, args []string) ([]*Spec, error) {
 			case "i":
 				kind = "int"
 			default:
-				return nil, fmt.Errorf("unknown kind in %s", arg)
+				return nil, fmt.Errorf("unknown kind in %s", originalArg)
+			}
+		}
+		if def != "" {
+			switch kind {
+			case "bool":
+				if def == "true" {
+					def = "1"
+				}
+				if def == "false" || def == "0" {
+					def = ""
+				}
+				if def != "1" && def != "" {
+					return nil, fmt.Errorf("invalid default in %s", originalArg)
+				}
+			case "int":
+				if _, err := strconv.Atoi(def); err != nil {
+					return nil, fmt.Errorf("invalid default in %s", originalArg)
+				}
 			}
 		}
 		specs = append(specs, &Spec{
-			Name:   name,
-			Alias:  alias,
-			Kind:   kind,
-			Array:  array,
-			Global: c.Global,
+			Name:    name,
+			Alias:   alias,
+			Kind:    kind,
+			Array:   array,
+			Global:  c.Global,
+			Default: def,
 		})
 	}
 	return specs, nil
@@ -271,17 +304,20 @@ Options:
 Specs:
   foo        boolean --foo option
   foo|f      boolean --foo option, and it has an alias -f
+  foo;true   boolena --foo option, and its defualt is true value
   foo|f|F    boolean --foo option, and it has aliases -f and -F
   bar=s      --bar option that takes string
   bar|b=s    --bar option that takes string, and it has an alias -b
+  bar=s;xyz  --bar option that takes string, and its defualt is "xyz"
   bar=s@     --bar option that takes string, and it can be used multiple times
   hoge=i     --hoge option that takes integer
   hoge|h=i   --hoge option that takes integer, and it has an alias -h
+  hoge=i;10  --hoge option that takes integer, and its defualt is 10
   hoge=i@    --hoge option that takes integer, and it can be used multiple times
 
 Exmples:
   $ bash-parse-options 'foo'
-  $ bash-parse-options -global -binding 'foo|f' 'bar|b=s' 'hoge|h=i@'
+  $ bash-parse-options -global -binding 'foo|f;true' 'bar|b=s' 'hoge|h=i@'
 `
 
 func main() {

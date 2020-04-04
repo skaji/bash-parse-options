@@ -16,6 +16,7 @@ echo "option_url_len=${#option_url[@]}"
 echo "option_timeout=$option_timeout"
 echo "option_retry=$option_retry"
 echo "option_z=$option_z"
+echo "option_default=$option_default"
 echo "argv=${argv[@]}"
 `
 
@@ -23,7 +24,7 @@ func createBashFile() string {
 	buf := new(bytes.Buffer)
 	buf.WriteString("#!/bin/bash\n")
 	writer = buf
-	os.Args = []string{"main_test", "url|u=s@", "timeout|t=i", "retry|r", "z"}
+	os.Args = []string{"main_test", "url|u=s@", "timeout|t=i", "retry|r", "z", "default=s;aaa"}
 	main()
 	str := buf.String()
 	str = strings.Replace(str, "# WRITE YOUR CODE\n", code, 1)
@@ -65,12 +66,12 @@ func TestBasic(t *testing.T) {
 	runtest := func() {
 		for _, c := range contains {
 			if !strings.Contains(out, c) {
-				t.Error("not contains " + c)
+				t.Errorf("`%s` not contains `%s`", out, c)
 			}
 		}
 		for _, c := range notContains {
 			if strings.Contains(out, c) {
-				t.Error("contains " + c)
+				t.Errorf("`%s` contains `%s`", out, c)
 			}
 		}
 	}
@@ -79,6 +80,7 @@ func TestBasic(t *testing.T) {
 		"option_url=a b",
 		"option_retry=1",
 		"option_timeout=10",
+		"option_default=aaa",
 	}
 	notContains = nil
 	if code != 0 {
@@ -120,6 +122,13 @@ func TestBasic(t *testing.T) {
 	contains = []string{
 		"option_url=a b c",
 		"option_url_len=1",
+	}
+	notContains = nil
+	runtest()
+
+	out, _ = runBash(file, "--default=xyz")
+	contains = []string{
+		"option_default=xyz",
 	}
 	notContains = nil
 	runtest()
