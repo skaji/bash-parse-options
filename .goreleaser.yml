@@ -1,0 +1,21 @@
+builds:
+  - main: ./cmd/bash-parse-options
+    binary: bash-parse-options
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+checksum:
+  name_template: 'bash-parse-options-checksums.txt'
+archives:
+  - name_template: "bash-parse-options-{{ .Os }}-{{ .Arch }}"
+    wrap_in_directory: true
+    format_overrides:
+      - goos: windows
+        format: zip
+changelog:
+  sort: asc
