@@ -39,7 +39,7 @@ func createBashFile() string {
 
 func runBash(file string, args ...string) (string, int) {
 	args = append([]string{file}, args...)
-	out, err := exec.Command("bash", args...).Output()
+	out, err := exec.Command("bash", args...).CombinedOutput()
 	exitCode := 0
 	var exitError *exec.ExitError
 	if err != nil {
@@ -98,11 +98,6 @@ func TestBasic(t *testing.T) {
 	notContains = nil
 	runtest()
 
-	_, code = runBash(file, "-t=a")
-	if code == 0 {
-		t.Fail()
-	}
-
 	out, code = runBash(file, "-zr")
 	contains = []string{
 		"option_retry=1",
@@ -132,4 +127,14 @@ func TestBasic(t *testing.T) {
 	}
 	notContains = nil
 	runtest()
+
+	if _, code := runBash(file, "--url", "-r"); code == 0 {
+		t.Fail()
+	}
+	if _, code := runBash(file, "--xxx"); code == 0 {
+		t.Fail()
+	}
+	if _, code = runBash(file, "-t=a"); code == 0 {
+		t.Fail()
+	}
 }
