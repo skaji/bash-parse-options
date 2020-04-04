@@ -178,7 +178,7 @@ func Footer(c *Config, ss []*Spec) *Lines {
 	if c.Binding {
 		l.Pushf(2, `-[a-zA-Z0-9][a-zA-Z0-9]*)`)
 		l.Pushf(3, `_v="${_argv[0]:1}"`)
-		l.Pushf(3, `_argv=($(echo "$_v" | grep -o .) "${_argv[@]:1}")`)
+		l.Pushf(3, `_argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")`)
 		l.Pushf(3, `;;`)
 	}
 	l.Pushf(2, `-*)`)
@@ -255,7 +255,11 @@ func parseArgs(c *Config, args []string) ([]*Spec, error) {
 	return specs, nil
 }
 
-var version = "dev"
+var (
+	version           = "dev"
+	writer  io.Writer = os.Stdout
+)
+
 var usage = `Usage: bash-parse-options [options] specs...
 
 Options:
@@ -295,7 +299,7 @@ func main() {
 	c := &Config{
 		Global:  *global,
 		Binding: *binding,
-		Writer:  os.Stdout,
+		Writer:  writer,
 	}
 	args := flag.Args()
 	if len(args) == 0 {

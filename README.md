@@ -68,7 +68,7 @@ main() {
       ;;
     -[a-zA-Z0-9][a-zA-Z0-9]*)
       _v="${_argv[0]:1}"
-      _argv=($(echo "$_v" | grep -o .) "${_argv[@]:1}")
+      _argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")
       ;;
     -*)
       echo "Unknown option ${_argv[0]}" >&2
@@ -107,7 +107,7 @@ parse_options() {
       ;;
     -[a-zA-Z0-9][a-zA-Z0-9]*)
       _v="${_argv[0]:1}"
-      _argv=($(echo "$_v" | grep -o .) "${_argv[@]:1}")
+      _argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")
       ;;
     -*)
       echo "Unknown option ${_argv[0]}" >&2
