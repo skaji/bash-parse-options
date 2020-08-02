@@ -124,7 +124,7 @@ func (s *Spec) argvCase() *Lines {
 		l.Pushf(2, `_argv=("${_argv[@]:1}")`)
 	}
 	l.Pushf(1, `else`)
-	l.Pushf(2, `if [[ -z ${_argv[1]} ]] || [[ ${_argv[1]} =~ ^- ]]; then`)
+	l.Pushf(2, `if [[ ${#_argv[@]} -eq 1 ]] || [[ ${_argv[1]} =~ ^- ]]; then`)
 	l.Pushf(3, `echo "${_argv[0]} option requires an argument" >&2`)
 	l.Pushf(3, `return 1`)
 	l.Pushf(2, `fi`)
@@ -194,7 +194,7 @@ func Footer(c *Config, ss []*Spec) *Lines {
 	l.Pushf(3, `return 1`)
 	l.Pushf(3, `;;`)
 	l.Pushf(2, `*)`)
-	l.Pushf(3, `argv=("${argv[@]}" "${_argv[0]}")`)
+	l.Pushf(3, `argv+=("${_argv[0]}")`)
 	l.Pushf(3, `_argv=("${_argv[@]:1}")`)
 	l.Pushf(3, `;;`)
 	l.Pushf(2, `esac`)
