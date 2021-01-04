@@ -17,8 +17,8 @@ generates the following code:
 ```bash
 main() {
   local option_url=()
-  local option_timeout
-  local option_retry
+  local option_timeout=
+  local option_retry=
   local argv=()
   local _argv=("$@")
   local _v
@@ -32,7 +32,7 @@ main() {
         _v="${_argv[0]##-u=}"
         _argv=("${_argv[@]:1}")
       else
-        if [[ -z ${_argv[1]} ]] || [[ ${_argv[1]} =~ ^- ]]; then
+        if [[ ${#_argv[@]} -eq 1 ]] || [[ ${_argv[1]} =~ ^- ]]; then
           echo "${_argv[0]} option requires an argument" >&2
           return 1
         fi
@@ -49,7 +49,7 @@ main() {
         _v="${_argv[0]##-t=}"
         _argv=("${_argv[@]:1}")
       else
-        if [[ -z ${_argv[1]} ]] || [[ ${_argv[1]} =~ ^- ]]; then
+        if [[ ${#_argv[@]} -eq 1 ]] || [[ ${_argv[1]} =~ ^- ]]; then
           echo "${_argv[0]} option requires an argument" >&2
           return 1
         fi
@@ -70,12 +70,12 @@ main() {
       _v="${_argv[0]:1}"
       _argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")
       ;;
-    -*)
+    -?*)
       echo "Unknown option ${_argv[0]}" >&2
       return 1
       ;;
     *)
-      argv=("${argv[@]}" "${_argv[0]}")
+      argv+=("${_argv[0]}")
       _argv=("${_argv[@]:1}")
       ;;
     esac
@@ -96,6 +96,7 @@ so that you can use the global variable `OPTION_FOO` everywhere.
 
 ```bash
 OPTION_FOO=
+ARGV=()
 parse_options() {
   local _argv=("$@")
   local _v
@@ -109,12 +110,12 @@ parse_options() {
       _v="${_argv[0]:1}"
       _argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")
       ;;
-    -*)
+    -?*)
       echo "Unknown option ${_argv[0]}" >&2
       return 1
       ;;
     *)
-      argv=("${argv[@]}" "${_argv[0]}")
+      ARGV+=("${_argv[0]}")
       _argv=("${_argv[@]:1}")
       ;;
     esac
