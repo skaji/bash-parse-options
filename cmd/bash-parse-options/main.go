@@ -159,6 +159,7 @@ func Header(c *Config, ss []*Spec) *Lines {
 			}
 			l.Pushf(0, `%s=%s`, s.OptionVariable(), def)
 		}
+		l.Pushf(0, `ARGV=()`)
 		l.Pushf(0, `parse_options() {`)
 	} else {
 		l.Pushf(0, `main() {`)
@@ -194,7 +195,11 @@ func Footer(c *Config, ss []*Spec) *Lines {
 	l.Pushf(3, `return 1`)
 	l.Pushf(3, `;;`)
 	l.Pushf(2, `*)`)
-	l.Pushf(3, `argv+=("${_argv[0]}")`)
+	if c.Global {
+		l.Pushf(3, `ARGV+=("${_argv[0]}")`)
+	} else {
+		l.Pushf(3, `argv+=("${_argv[0]}")`)
+	}
 	l.Pushf(3, `_argv=("${_argv[@]:1}")`)
 	l.Pushf(3, `;;`)
 	l.Pushf(2, `esac`)
