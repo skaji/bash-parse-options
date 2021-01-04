@@ -189,7 +189,7 @@ func Footer(c *Config, ss []*Spec) *Lines {
 		l.Pushf(3, `_argv=($(echo "$_v" | \grep -o . | \sed -e 's/^/-/') "${_argv[@]:1}")`)
 		l.Pushf(3, `;;`)
 	}
-	l.Pushf(2, `-*)`)
+	l.Pushf(2, `-?*)`)
 	l.Pushf(3, `echo "Unknown option ${_argv[0]}" >&2`)
 	l.Pushf(3, `return 1`)
 	l.Pushf(3, `;;`)
